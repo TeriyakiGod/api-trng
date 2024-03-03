@@ -28,14 +28,14 @@ public class WebSocketController : ControllerBase
         var stopwatch = new Stopwatch();
         long totalBits = 0;
         var lockObject = new object();
-        using var writer = new StreamWriter("received_words.txt", append: true);
+
+        var writer = new BinaryWriter(new FileStream("data.bin", FileMode.Append));
 
         var timer = new System.Timers.Timer(1000);
         timer.Elapsed += (sender, e) =>
         {
             lock (lockObject)
             {
-                // Calculate and display the kilobytes per second
                 double kilobytesPerSecond = totalBits / (8.0 * 1024) / stopwatch.Elapsed.TotalSeconds;
                 Console.Clear();
                 Console.WriteLine($"Kilobytes per second: {kilobytesPerSecond}");
@@ -57,9 +57,8 @@ public class WebSocketController : ControllerBase
                     totalBits += 32;
                 }
 
-                // Write the received word to the text file
-                await writer.WriteLineAsync(message.ToString());
-                await writer.FlushAsync();
+                // Write the received word to the binary file
+                writer.Write(message);
             }
             result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
         }
